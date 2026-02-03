@@ -7,8 +7,6 @@
  */
 
 using System.Collections;
-using System.Linq;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -49,6 +47,9 @@ public class PlayerShooting : MonoBehaviour
 		EntityQuery directoryQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<Directory>().Build(manager);
 		
 		// The Directory entity might take a few frames until it's fully baked and ready to access its data.
+		// Ex. When you play the scene with the subscene open, its entities are baked immediately 
+		//     When you play the scene with the subscene closed or in a build, it'll take a few frames
+		//
 		// This is why we start this co-routine, in order to wait until the Directory is ready to go.
 		StartCoroutine(WaitUntilQueryFindsDirectorySingleton(directoryQuery));
 	}
