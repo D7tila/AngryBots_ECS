@@ -50,7 +50,7 @@ public class PlayerShooting : MonoBehaviour
 		// Ex. When you play the scene with the subscene open, its entities are baked immediately 
 		//     When you play the scene with the subscene closed or in a build, it'll take a few frames
 		//
-		// This is why we start this co-routine, in order to wait until the Directory is ready to go.
+		// This is why we start this co-routine, in order to wait until the Directory entity is baked and ready
 		StartCoroutine(WaitUntilQueryFindsDirectorySingleton(directoryQuery));
 	}
 
