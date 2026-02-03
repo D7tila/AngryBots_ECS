@@ -6,6 +6,9 @@
 	* - The entity instantiation in the SpawnBulletECS() and SpawnBulletSpreadECS() methods
  */
 
+using System.Collections;
+using System.Linq;
+using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
@@ -39,17 +42,29 @@ public class PlayerShooting : MonoBehaviour
 		
 		// Get a reference to an EntityManager which is how we will create and access entities
 		manager = World.DefaultGameObjectInjectionWorld.EntityManager;
-
+		
 		// Create a query that will find the Directory entity. The Directory is created automatically
 		// by the baking process of the Directory GameObject which you can find in the "Baker Sub Scene"
 		// in the ECS Shooter scene
-		EntityQuery query = new EntityQueryBuilder(Allocator.Temp).WithAll<Directory>().Build(manager);
-
-		// If this query finds one and only one Directory, then grab the bullet entity and store it
-		if (query.HasSingleton<Directory>())
-			bulletEntityPrefab = query.GetSingleton<Directory>().bulletPrefab;
+		EntityQuery directoryQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<Directory>().Build(manager);
+		
+		// The Directory entity might take a few frames until it's fully baked and ready to access its data.
+		// This is why we start this co-routine, in order to wait until the Directory is ready to go.
+		StartCoroutine(WaitUntilQueryFindsDirectorySingleton(directoryQuery));
 	}
 
+	private IEnumerator WaitUntilQueryFindsDirectorySingleton(EntityQuery directoryQuery)
+	{
+		yield return new WaitUntil(() =>
+		{
+			// Checking for when this query finds one and only one Directory
+			return directoryQuery.HasSingleton<Directory>();
+		});
+		
+		// We now grab the bullet entity and store it
+		bulletEntityPrefab = directoryQuery.GetSingleton<Directory>().bulletPrefab;
+	}
+	
 	void Update()
 	{
 		timer += Time.deltaTime;
