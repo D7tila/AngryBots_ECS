@@ -3,15 +3,12 @@
  * or used for GameObject workflows, and DOTS items are nearly identical to the
  * PlayerShooting script (instead of bullets, this script spawn enemies). The DOTS 
  * items to be aware of in this script are:
-	* - The entity members: manager, and bulletEntityPrefab
+	* - The entity members: manager
 	* - The initialization in the Start() method
 	* - The entity instantiation in the Spawn() method
  */
 
-using System.Collections;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Transforms;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
@@ -26,8 +23,8 @@ public class EnemySpawner : MonoBehaviour
 	[Range(1, 100)] public int spawnsPerInterval = 1;
 	[Range(.1f, 2f)] public float spawnInterval = 1f;
 	
-	EntityManager manager;          // Member to hold an EntityManager reference
-	Entity enemyEntityPrefab;       // Member to hold the ID of the enemy entity
+	// Member to hold an EntityManager reference
+	EntityManager manager;
 
 	float cooldown;
 
@@ -42,30 +39,6 @@ public class EnemySpawner : MonoBehaviour
 		
 		// Get a reference to an EntityManager which is how we will create and access entities
 		manager = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-		// Create a query that will find the Directory entity. The Directory is created automatically
-		// by the baking process of the Directory GameObject which you can find in the "Baker Sub Scene"
-		// in the ECS Shooter scene
-		EntityQuery directoryQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<Directory>().Build(manager);
-
-		// The Directory entity might take a few frames until it's fully baked and ready to access its data.
-		// Ex. When you play the scene with the subscene open, its entities are baked immediately 
-		//     When you play the scene with the subscene closed or in a build, it'll take a few frames
-		//
-		// This is why we start this co-routine, in order to wait until the Directory entity is baked and ready
-		StartCoroutine(WaitUntilQueryFindsDirectorySingleton(directoryQuery));
-	}
-	
-	private IEnumerator WaitUntilQueryFindsDirectorySingleton(EntityQuery directoryQuery)
-	{
-		yield return new WaitUntil(() =>
-		{
-			// Checking for when this query finds one and only one Directory
-			return directoryQuery.HasSingleton<Directory>();
-		});
-		
-		// We now grab the enemy entity and store it
-		enemyEntityPrefab = directoryQuery.GetSingleton<Directory>().enemyPrefab;
 	}
 	
 	void Update()
@@ -86,28 +59,24 @@ public class EnemySpawner : MonoBehaviour
 	{
 		for (int i = 0; i < spawnsPerInterval; i++)
 		{
-			Vector3 pos = Settings.GetPositionAroundPlayer(enemySpawnRadius);
+			Vector3 newEnemyPosition = Settings.GetPositionAroundPlayer(enemySpawnRadius);
 
 			if (!useECS)
 			{
-				Instantiate(enemyPrefab, pos, Quaternion.identity);
+				Instantiate(enemyPrefab, newEnemyPosition, Quaternion.identity);
 			}
 			else
 			{
-				// Use our EntityManager to instantiate a copy of the enemy entity
-				Entity enemy = manager.Instantiate(enemyEntityPrefab);
-
-				// Create a new LocalTransform component and give it the values needed to
-				// be positioned at the spawn point
-				LocalTransform t = new LocalTransform
+				// Use our EntityManager to instantiate a new entity and give it an enemy spawn request component
+				var enemyRequestEntity = manager.CreateEntity();
+				var spawnEnemyRequest = new SpawnEnemyRequest()
 				{
-					Position = pos,
-					Rotation = Quaternion.identity,
-					Scale = 1f
+					position = newEnemyPosition
 				};
-
+		
 				// Set the component data we just created for the entity we just created
-				manager.SetComponentData(enemy, t);
+				manager.AddComponent<SpawnEnemyRequest>(enemyRequestEntity);
+				manager.SetComponentData(enemyRequestEntity, spawnEnemyRequest);
 			}
 		}
 	}

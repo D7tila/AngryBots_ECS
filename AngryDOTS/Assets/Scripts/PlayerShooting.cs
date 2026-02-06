@@ -32,7 +32,8 @@ public class PlayerShooting : MonoBehaviour
 
 	float timer;
 
-	EntityManager manager;		// Member to hold an EntityManager reference
+	// Member to hold an EntityManager reference
+	EntityManager manager;
 
 
 	void Start()
@@ -108,7 +109,7 @@ public class PlayerShooting : MonoBehaviour
 	// This method creates a request to spawn bullets as entities, instead of GameObjects
 	void SpawnBulletECS(Vector3 rotation)
 	{
-		// Use our EntityManager to instantiate a copy of the bullet request
+		// Use our EntityManager to instantiate a new entity and give it a bullet spawn request component
 		var bulletRequestEntity = manager.CreateEntity();
 		var spawnBulletRequest = new SpawnBulletRequest
 		{
@@ -125,7 +126,7 @@ public class PlayerShooting : MonoBehaviour
 	// as entities, instead of GameObjects
 	void SpawnBulletSpreadECS(Vector3 rotation)
 	{
-		// Use our EntityManager to instantiate a copy of the bullet spread request
+		// Use our EntityManager to instantiate a new entity and give it a bullet spread request component
 		var bulletRequestEntity = manager.CreateEntity();
 		var spawnBulletSpreadRequest = new SpawnBulletSpreadRequest
 		{

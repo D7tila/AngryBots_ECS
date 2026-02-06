@@ -10,8 +10,8 @@ partial struct SpawnBulletSpreadSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        // These 2 lines makes the system not update unless at least one entity in
-        // the world exists that has the Directory component, and 1 with the SpawnBulletSpreadRequest
+        // These 2 lines makes the system not update unless at least 1 entity in the world
+        // exists that has the Directory component, and 1 with the SpawnBulletSpreadRequest component
         state.RequireForUpdate<Directory>();
         state.RequireForUpdate<SpawnBulletSpreadRequest>();
     }

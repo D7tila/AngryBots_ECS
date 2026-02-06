@@ -5,15 +5,15 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-partial struct SpawnBulletSystem : ISystem
+partial struct SpawnEnemySystem : ISystem
 {
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         // These 2 lines makes the system not update unless at least 1 entity in the world
-        // exists that has the Directory component, and 1 with the SpawnBulletRequest component
+        // exists that has the Directory component, and also 1 with a SpawnEnemyRequest component
         state.RequireForUpdate<Directory>();
-        state.RequireForUpdate<SpawnBulletRequest>();
+        state.RequireForUpdate<SpawnEnemyRequest>();
     }
     
     [BurstCompile]
@@ -22,7 +22,7 @@ partial struct SpawnBulletSystem : ISystem
         var directoryQuery = SystemAPI.QueryBuilder().WithAll<Directory>().Build();
         var directory = directoryQuery.GetSingleton<Directory>();
 
-        Entity bulletEntityPrefab = directory.bulletPrefab;
+        Entity enemyPrefab = directory.enemyPrefab;
         EntityManager manager = state.EntityManager;
 
         // This code uses a CommandBuffer, which lets us queue up commands for playback later.
@@ -31,14 +31,13 @@ partial struct SpawnBulletSystem : ISystem
         using (var commandBuffer = new EntityCommandBuffer(Allocator.TempJob))
         {
             foreach (var(spawnBulletRequest,entity) in
-                     SystemAPI.Query<RefRO<SpawnBulletRequest>>()
+                     SystemAPI.Query<RefRO<SpawnEnemyRequest>>()
                          .WithEntityAccess())
             {
-                SpawnBullet(
+                SpawnEnemy(
                     ref manager,
-                    bulletEntityPrefab,
-                    spawnBulletRequest.ValueRO.gunBarrelPosition,
-                    spawnBulletRequest.ValueRO.playerRotation);
+                    enemyPrefab,
+                    spawnBulletRequest.ValueRO.position);
                 
                 commandBuffer.DestroyEntity(entity);
             }
@@ -49,25 +48,24 @@ partial struct SpawnBulletSystem : ISystem
     }
     
     // This method spawns bullets as entities instead of GameObjects
-    private void SpawnBullet(
+    private void SpawnEnemy(
         ref EntityManager manager, 
-        Entity bulletEntityPrefab, 
-        float3 position,
-        Quaternion rotation)
+        Entity enemyPrefab, 
+        float3 position)
     {
         // Use our EntityManager to instantiate a copy of the bullet entity
-        Entity bullet = manager.Instantiate(bulletEntityPrefab);
+        Entity enemy = manager.Instantiate(enemyPrefab);
 
         // Create a new LocalTransform component and give it the values needed to
-        // be positioned at the barrel of the gun
+        // be positioned at the spawn point
         LocalTransform t = new LocalTransform()
         {
             Position = position,
-            Rotation = rotation,
+            Rotation = Quaternion.identity,
             Scale = 1f
         };
 
         // Set the component data we just created for the entity we just created
-        manager.SetComponentData(bullet, t);
+        manager.SetComponentData(enemy, t);
     }
 }

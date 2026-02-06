@@ -29,7 +29,7 @@ partial struct TurnTowardsPlayerSystem : ISystem
 	// how to access managed data from a system. Furthermore, even though OnUpdate() won't 
 	// Burst compile does not prevent the rest of the code from being Burst compiled. Even
 	// the job scheduled from here can be Burst compiled. Sometimes this trade off is completely
-	// acceptable 
+	// acceptable
 	public void OnUpdate(ref SystemState state)
 	{
 		// Access this data prevents Burst compilation. This prevents jobs from being
