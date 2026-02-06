@@ -1,15 +1,18 @@
 ﻿/* PLAYER SHOOTING
  * This script manages the process of shooting bullets. Most of the code is general
  * or used for GameObject workflows. The DOTS items to be aware of in this script are:
-	* - The entity members: manager, and bulletEntityPrefab
+	* - The entity member: manager
 	* - The initialization in the Start() method
 	* - The entity instantiation in the SpawnBulletECS() and SpawnBulletSpreadECS() methods
+ *
+ * Note: This code is for presentation and learning purposes. We're handing off the spawning
+ *	of entities to the Systems, but based on MonoBehaviour input.
+ * 
+ *  You can have all of the input detection code be systems-based, please refer to our ECS samples:
+ *	https://github.com/Unity-Technologies/EntityComponentSystemSamples
  */
 
-using System.Collections;
-using Unity.Collections;
 using Unity.Entities;
-using Unity.Transforms;
 using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
@@ -30,7 +33,6 @@ public class PlayerShooting : MonoBehaviour
 	float timer;
 
 	EntityManager manager;		// Member to hold an EntityManager reference
-	Entity bulletEntityPrefab;	// Member to hold the ID of the bullet entity
 
 
 	void Start()
@@ -40,30 +42,6 @@ public class PlayerShooting : MonoBehaviour
 		
 		// Get a reference to an EntityManager which is how we will create and access entities
 		manager = World.DefaultGameObjectInjectionWorld.EntityManager;
-		
-		// Create a query that will find the Directory entity. The Directory is created automatically
-		// by the baking process of the Directory GameObject which you can find in the "Baker Sub Scene"
-		// in the ECS Shooter scene
-		EntityQuery directoryQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<Directory>().Build(manager);
-		
-		// The Directory entity might take a few frames until it's fully baked and ready to access its data.
-		// Ex. When you play the scene with the subscene open, its entities are baked immediately 
-		//     When you play the scene with the subscene closed or in a build, it'll take a few frames
-		//
-		// This is why we start this co-routine, in order to wait until the Directory entity is baked and ready
-		StartCoroutine(WaitUntilQueryFindsDirectorySingleton(directoryQuery));
-	}
-
-	private IEnumerator WaitUntilQueryFindsDirectorySingleton(EntityQuery directoryQuery)
-	{
-		yield return new WaitUntil(() =>
-		{
-			// Checking for when this query finds one and only one Directory
-			return directoryQuery.HasSingleton<Directory>();
-		});
-		
-		// We now grab the bullet entity and store it
-		bulletEntityPrefab = directoryQuery.GetSingleton<Directory>().bulletPrefab;
 	}
 	
 	void Update()
