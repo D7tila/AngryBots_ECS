@@ -1,4 +1,18 @@
 using Unity.Entities;
+using Unity.Mathematics;
+
+public struct SpawnBulletRequest : IComponentData
+{
+	public float3 gunBarrelPosition;
+	public quaternion playerRotation;
+}
+
+public struct SpawnBulletSpreadRequest : IComponentData
+{
+	public float3 gunBarrelPosition;
+	public float3 playerRotation;
+	public int spreadAmount;
+}
 
 // This component contains a single float Value which represents how
 // much health an entity has

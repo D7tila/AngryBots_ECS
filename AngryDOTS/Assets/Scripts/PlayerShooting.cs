@@ -68,6 +68,9 @@ public class PlayerShooting : MonoBehaviour
 	
 	void Update()
 	{
+		if(Settings.IsPlayerDead())
+			return;
+		
 		timer += Time.deltaTime;
 
 		if (Input.GetButton("Fire1") && timer >= fireRate)
@@ -124,75 +127,38 @@ public class PlayerShooting : MonoBehaviour
 		}
 	}
 
-	// This method spawns bullets as entities instead of GameObjects
+	// This method creates a request to spawn bullets as entities, instead of GameObjects
 	void SpawnBulletECS(Vector3 rotation)
 	{
-		// Use our EntityManager to instantiate a copy of the bullet entity
-		Entity bullet = manager.Instantiate(bulletEntityPrefab);
-
-		// Create a new LocalTransform component and give it the values needed to
-		// be positioned at the barrel of the gun
-		LocalTransform t = new LocalTransform
+		// Use our EntityManager to instantiate a copy of the bullet request
+		var bulletRequestEntity = manager.CreateEntity();
+		var spawnBulletRequest = new SpawnBulletRequest
 		{
-			Position = gunBarrel.position,
-			Rotation = Quaternion.Euler(rotation),
-			Scale = 1f
+			gunBarrelPosition = gunBarrel.position,
+			playerRotation = Quaternion.Euler(rotation)
 		};
-
+		
 		// Set the component data we just created for the entity we just created
-		manager.SetComponentData(bullet, t);
+		manager.AddComponent<SpawnBulletRequest>(bulletRequestEntity);
+		manager.SetComponentData(bulletRequestEntity, spawnBulletRequest);
 	}
 
-	// This method spawns many bullets at a time as entities instead of GameObjects
+	// This method creates a request to spawn many bullets at a time
+	// as entities, instead of GameObjects
 	void SpawnBulletSpreadECS(Vector3 rotation)
 	{
-		// Most of this code is just boilerplate math to create a grid of rotations. Only the
-		// relevant DOTS code is commented
-		if (spreadAmount % 2 != 0) //No odd numbers to keep the spread even
-			spreadAmount += 1;
-
-		int max = spreadAmount / 2;
-		int min = -max;
-		int totalAmount = spreadAmount * spreadAmount;
-
-		Vector3 tempRot = rotation;
-		int index = 0;
-
-		// NativeArrays are thread-safe data containers. In DOTS, they are a great way to work
-		// with a lot of entities at once. They must be cleaned up though. This code creates
-		// a temporary NativeArray with a size equal to the number of bullets we want to spawn
-		NativeArray<Entity> bullets = new NativeArray<Entity>(totalAmount, Allocator.TempJob);
-
-		// By passing a NativeArray into the Instantiate() method of the EntityManager, many entities
-		// are created at once and put into this NativeArray
-		manager.Instantiate(bulletEntityPrefab, bullets);
-
-		for (int x = min; x < max; x++)
+		// Use our EntityManager to instantiate a copy of the bullet spread request
+		var bulletRequestEntity = manager.CreateEntity();
+		var spawnBulletSpreadRequest = new SpawnBulletSpreadRequest
 		{
-			tempRot.x = (rotation.x + 3 * x) % 360;
-
-			for (int y = min; y < max; y++)
-			{
-				tempRot.y = (rotation.y + 3 * y) % 360;
-
-
-				// Create a new LocalTransform component and give it the values needed to
-				// be positioned at the barrel of the gun
-				LocalTransform t = new LocalTransform
-				{
-					Position = gunBarrel.position,
-					Rotation = Quaternion.Euler(tempRot), // Use the temp rotation value needed to make the bullets spread out
-					Scale = 1f
-				};
-
-				// Set the component data we just created for the entity we just created
-				manager.SetComponentData(bullets[index], t);
-
-				index++;
-			}
-		}
-		// Be sure to Dispose of the NativeArray or else you'll have a memory leak
-		bullets.Dispose();
+			gunBarrelPosition = gunBarrel.position,
+			playerRotation = rotation,
+			spreadAmount = spreadAmount
+		};
+		
+		// Set the component data we just created for the entity we just created
+		manager.AddComponent<SpawnBulletSpreadRequest>(bulletRequestEntity);
+		manager.SetComponentData(bulletRequestEntity, spawnBulletSpreadRequest);
 	}
 }
 

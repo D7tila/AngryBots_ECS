@@ -49,7 +49,7 @@ partial struct RemoveDeadSystem : ISystem
 				// specify the type of access needed for the component data
 				if (health.ValueRO.Value <= 0f)
 				{
-					// If the health is <= 0, queue the entity to be destroy
+					// If the health is <= 0, queue the entity to be destroyed
 					commandBuffer.DestroyEntity(entity);
 				}
 			}
