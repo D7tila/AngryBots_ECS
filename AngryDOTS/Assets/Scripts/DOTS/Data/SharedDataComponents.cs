@@ -34,21 +34,6 @@ public struct EnemyTag : IComponentData { }
 // used to identify entities that need to "move forward"
 public struct MoveForward : IComponentData { }
 
-
-// The following components are for spawning bullets and enemies...
-public struct SpawnBulletRequest : IComponentData
-{
-	public float3 gunBarrelPosition;
-	public quaternion playerRotation;
-}
-
-public struct SpawnBulletSpreadRequest : IComponentData
-{
-	public float3 gunBarrelPosition;
-	public float3 playerRotation;
-	public int spreadAmount;
-}
-
 public struct SpawnEnemyRequest : IComponentData
 {
 	public float3 position;

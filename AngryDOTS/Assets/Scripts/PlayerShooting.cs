@@ -12,7 +12,6 @@
  *	https://github.com/Unity-Technologies/EntityComponentSystemSamples
  */
 
-using Unity.Entities;
 using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
@@ -27,17 +26,11 @@ public class PlayerShooting : MonoBehaviour
 
 	float timer;
 
-	// Member to hold an EntityManager reference
-	EntityManager manager;
-
 
 	void Start()
 	{
 		// If not using ECS, no need to do anything here
 		if (!Settings.IsUsingECSForBullets()) return;
-		
-		// Get a reference to an EntityManager which is how we will create and access entities
-		manager = World.DefaultGameObjectInjectionWorld.EntityManager;
 	}
 	
 	void Update()
