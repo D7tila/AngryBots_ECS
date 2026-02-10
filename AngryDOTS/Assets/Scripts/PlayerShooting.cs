@@ -17,16 +17,11 @@ using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
 {
-	public bool useECS = false;
-	public bool spreadShot = false;
-
 	[Header("General")]
 	public Transform gunBarrel;
 	public ParticleSystem shotVFX;
 	public AudioSource shotAudio;
-	public float fireRate = .1f;
-	public int spreadAmount = 20;
-
+	
 	[Header("Bullets")]
 	public GameObject bulletPrefab;
 
@@ -39,7 +34,7 @@ public class PlayerShooting : MonoBehaviour
 	void Start()
 	{
 		// If not using ECS, no need to do anything here
-		if (!useECS) return;
+		if (!Settings.IsUsingECSForBullets()) return;
 		
 		// Get a reference to an EntityManager which is how we will create and access entities
 		manager = World.DefaultGameObjectInjectionWorld.EntityManager;
@@ -52,21 +47,14 @@ public class PlayerShooting : MonoBehaviour
 		
 		timer += Time.deltaTime;
 
-		if (Input.GetButton("Fire1") && timer >= fireRate)
+		if (Input.GetButton("Fire1") && timer >= Settings.GetFireRate())
 		{
 			Vector3 rotation = gunBarrel.rotation.eulerAngles;
 			rotation.x = 0f;
 
-			if (useECS)
+			if (!Settings.IsUsingECSForBullets())
 			{
-				if (spreadShot)
-					SpawnBulletSpreadECS(rotation);
-				else
-					SpawnBulletECS(rotation);
-			}
-			else
-			{
-				if (spreadShot)
+				if (Settings.IsUsingSpreadShot())
 					SpawnBulletSpread(rotation);
 				else
 					SpawnBullet(rotation);
@@ -89,7 +77,7 @@ public class PlayerShooting : MonoBehaviour
 
 	void SpawnBulletSpread(Vector3 rotation)
 	{
-		int max = spreadAmount / 2;
+		int max = Settings.GetSpreadAmount() / 2;
 		int min = -max;
 
 		Vector3 tempRot = rotation;
@@ -104,40 +92,6 @@ public class PlayerShooting : MonoBehaviour
 				Instantiate(bulletPrefab, gunBarrel.position, Quaternion.Euler(tempRot));
 			}
 		}
-	}
-
-	// This method creates a request to spawn bullets as entities, instead of GameObjects
-	void SpawnBulletECS(Vector3 rotation)
-	{
-		// Use our EntityManager to instantiate a new entity and give it a bullet spawn request component
-		var bulletRequestEntity = manager.CreateEntity();
-		var spawnBulletRequest = new SpawnBulletRequest
-		{
-			gunBarrelPosition = gunBarrel.position,
-			playerRotation = Quaternion.Euler(rotation)
-		};
-		
-		// Set the component data we just created for the entity we just created
-		manager.AddComponent<SpawnBulletRequest>(bulletRequestEntity);
-		manager.SetComponentData(bulletRequestEntity, spawnBulletRequest);
-	}
-
-	// This method creates a request to spawn many bullets at a time
-	// as entities, instead of GameObjects
-	void SpawnBulletSpreadECS(Vector3 rotation)
-	{
-		// Use our EntityManager to instantiate a new entity and give it a bullet spread request component
-		var bulletRequestEntity = manager.CreateEntity();
-		var spawnBulletSpreadRequest = new SpawnBulletSpreadRequest
-		{
-			gunBarrelPosition = gunBarrel.position,
-			playerRotation = rotation,
-			spreadAmount = spreadAmount
-		};
-		
-		// Set the component data we just created for the entity we just created
-		manager.AddComponent<SpawnBulletSpreadRequest>(bulletRequestEntity);
-		manager.SetComponentData(bulletRequestEntity, spawnBulletSpreadRequest);
 	}
 }
 

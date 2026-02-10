@@ -23,12 +23,12 @@ public struct TimeToLive : IComponentData
 }
 
 // This "tag" component contains no data and is instead simply
-// used to identify entities as "enemies"
-public struct EnemyTag : IComponentData { }
-
-// This "tag" component contains no data and is instead simply
 // used to identify entities as "players"
 public struct PlayerTag : IComponentData { }
+
+// This "tag" component contains no data and is instead simply
+// used to identify entities as "enemies"
+public struct EnemyTag : IComponentData { }
 
 // This "tag" component contains no data and is instead simply
 // used to identify entities that need to "move forward"

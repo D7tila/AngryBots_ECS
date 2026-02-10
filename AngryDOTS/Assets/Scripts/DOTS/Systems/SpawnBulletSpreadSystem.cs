@@ -28,7 +28,7 @@ partial struct SpawnBulletSpreadSystem : ISystem
         // This code uses a CommandBuffer, which lets us queue up commands for playback later.
         // Note: CommandBuffers must be cleaned up to prevent memory leaks, so the "using" syntax
         // is used here to automatically manage that
-        using (var commandBuffer = new EntityCommandBuffer(Allocator.TempJob))
+        using (var commandBuffer = new EntityCommandBuffer(Allocator.Temp))
         {
             foreach (var(spawnBulletRequest,entity) in
                      SystemAPI.Query<RefRO<SpawnBulletSpreadRequest>>()
@@ -47,6 +47,7 @@ partial struct SpawnBulletSpreadSystem : ISystem
             // After the foreach, playback the buffer, destroying the entities
             commandBuffer.Playback(state.EntityManager);
         }
+        // Once the "using" block closes, the CommandBuffer will be cleaned up
     }
 
     private void SpawnBulletSpread(
