@@ -33,20 +33,13 @@ public class Settings : MonoBehaviour
 	public readonly static float PlayerCollisionRadius = .5f;
 	public readonly static float EnemyCollisionRadius = .3f;
 	
-	public static Vector3 PlayerPosition
-	{
-		get { return instance.player.position; }
-	}
+	public static Vector3 PlayerPosition => instance.player.position;
 	
-	public static Vector3 PlayerGunBarrelPosition
-	{
-		get { return instance._playerShooting.gunBarrel.position; }
-	}
+	public static Vector3 PlayerGunBarrelPosition => 
+		instance._playerShooting.gunBarrel.position;
 	
-	public static Vector3 PlayerGunBarrelRotationEuler
-	{
-		get { return instance._playerShooting.gunBarrel.rotation.eulerAngles; }
-	}
+	public static Vector3 PlayerGunBarrelRotationEuler => 
+		instance._playerShooting.gunBarrel.rotation.eulerAngles;
 	
 	public static bool IsUsingECSForBullets() => instance.useECSforBullets;
 	public static bool IsUsingSpreadShot() => instance.spreadShot;
