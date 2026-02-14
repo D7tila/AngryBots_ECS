@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Mathematics;
 
 // This component contains a single float Value which represents how
 // much health an entity has
@@ -33,8 +32,3 @@ public struct EnemyTag : IComponentData { }
 // This "tag" component contains no data and is instead simply
 // used to identify entities that need to "move forward"
 public struct MoveForward : IComponentData { }
-
-public struct SpawnEnemyRequest : IComponentData
-{
-	public float3 position;
-}

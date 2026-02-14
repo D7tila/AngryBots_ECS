@@ -1,61 +1,72 @@
 using UnityEngine;
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+// Timing: Update this system before the group of systems that renders the geometry.
+//  This helps us to allocate and set transform data of the entity before it's rendered,
+//  to avoid having a 1-frame delay where you can see the entity at the origin
+[UpdateBefore(typeof(TransformSystemGroup))]
 partial struct SpawnEnemySystem : ISystem
 {
-    [BurstCompile]
+    float timer;
+    
+    // A query to find the directory data component
+    EntityQuery directoryQuery;
+    EntityManager manager;
+    
     public void OnCreate(ref SystemState state)
     {
         // These 2 lines makes the system not update unless at least 1 entity in the world
         // exists that has the Directory component, and also 1 with a SpawnEnemyRequest component
         state.RequireForUpdate<Directory>();
-        state.RequireForUpdate<SpawnEnemyRequest>();
+        
+        directoryQuery = SystemAPI.QueryBuilder().WithAll<Directory>().Build();
+        
+        timer = 0f;
     }
     
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var directoryQuery = SystemAPI.QueryBuilder().WithAll<Directory>().Build();
-        var directory = directoryQuery.GetSingleton<Directory>();
+        if (!Settings.Instance.useECSforEnemies || 
+            !Settings.Instance.spawnEnemies ||
+            Settings.IsPlayerDead())
+            return;
+        
+        Directory directory = directoryQuery.GetSingleton<Directory>();
 
         Entity enemyPrefab = directory.enemyPrefab;
-        EntityManager manager = state.EntityManager;
+        manager = state.EntityManager;
 
-        // This code uses a CommandBuffer, which lets us queue up commands for playback later.
-        // Note: CommandBuffers must be cleaned up to prevent memory leaks, so the "using" syntax
-        // is used here to automatically manage that
-        using (var commandBuffer = new EntityCommandBuffer(Allocator.Temp))
+        timer += SystemAPI.Time.DeltaTime;
+
+        if (timer > Settings.Instance.enemySpawnInterval)
         {
-            foreach (var(spawnBulletRequest,entity) in
-                     SystemAPI.Query<RefRO<SpawnEnemyRequest>>()
-                         .WithEntityAccess())
+            for (int i = 0; i < Settings.Instance.enemySpawnsPerInterval; i++)
             {
+                float3 newEnemyPosition =
+                    Settings.GetPositionAroundPlayer(Settings.Instance.enemySpawnRadius);
+
                 SpawnEnemy(
                     ref manager,
                     enemyPrefab,
-                    spawnBulletRequest.ValueRO.position);
-                
-                commandBuffer.DestroyEntity(entity);
+                    newEnemyPosition);
+
+                timer = 0f;
             }
-            
-            // After the foreach, playback the buffer, destroying the entities
-            commandBuffer.Playback(state.EntityManager);
         }
-        // Once the "using" block closes, the CommandBuffer will be cleaned up
     }
     
-    // This method spawns bullets as entities instead of GameObjects
-    private void SpawnEnemy(
-        ref EntityManager manager, 
+    [BurstCompile]
+    // This method spawns enemies as entities instead of GameObjects
+    void SpawnEnemy(
+        ref EntityManager manager,
         Entity enemyPrefab, 
         float3 position)
     {
         // Use our EntityManager to instantiate a copy of the bullet entity
-        Entity enemy = manager.Instantiate(enemyPrefab);
+        Entity newEnemy = manager.Instantiate(enemyPrefab);
 
         // Create a new LocalTransform component and give it the values needed to
         // be positioned at the spawn point
@@ -67,6 +78,6 @@ partial struct SpawnEnemySystem : ISystem
         };
 
         // Set the component data we just created for the entity we just created
-        manager.SetComponentData(enemy, t);
+        manager.SetComponentData(newEnemy, t);
     }
 }

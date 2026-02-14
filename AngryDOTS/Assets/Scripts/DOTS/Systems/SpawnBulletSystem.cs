@@ -5,6 +5,9 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+// Timing: Update this system before the group of systems that renders the geometry.
+//  This helps us to allocate and set transform data of the entity before it's rendered,
+//  to avoid having a 1-frame delay where you can see the entity at the origin
 [UpdateBefore(typeof(TransformSystemGroup))]
 partial struct SpawnBulletSystem : ISystem
 {
@@ -24,7 +27,6 @@ partial struct SpawnBulletSystem : ISystem
         timer = 0f;
     }
     
-    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         if(Settings.IsPlayerDead())
@@ -37,18 +39,18 @@ partial struct SpawnBulletSystem : ISystem
         Entity bulletEntityPrefab = directory.bulletPrefab;
         EntityManager manager = state.EntityManager;
         
-        if (Settings.IsUsingECSForBullets() && 
+        if (Settings.Instance.useECSforBullets && 
             Input.GetButton("Fire1") && 
-            timer >= Settings.GetFireRate())
+            timer >= Settings.Instance.fireRate)
         {
             Vector3 rotation = Settings.PlayerGunBarrelRotationEuler;
             rotation.x = 0f;
 
-            if (Settings.IsUsingSpreadShot())
+            if (Settings.Instance.spreadShot)
             {
                 SpawnBulletSpread(ref manager, 
                     bulletEntityPrefab,
-                    Settings.GetSpreadAmount(), 
+                    Settings.Instance.spreadAmount, 
                     Settings.PlayerGunBarrelPosition, 
                     rotation);
             }
@@ -66,6 +68,7 @@ partial struct SpawnBulletSystem : ISystem
     }
     
     // This method spawns bullets as entities instead of GameObjects
+    [BurstCompile]
     private void SpawnBullet(
         ref EntityManager manager,
         Entity bulletEntityPrefab, 
@@ -88,6 +91,7 @@ partial struct SpawnBulletSystem : ISystem
         manager.SetComponentData(bullet, t);
     }
     
+    [BurstCompile]
     private void SpawnBulletSpread(
         ref EntityManager manager, 
         Entity bulletEntityPrefab,
